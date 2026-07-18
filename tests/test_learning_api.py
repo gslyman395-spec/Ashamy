@@ -56,7 +56,14 @@ class SourceWeightingTestCase(unittest.TestCase):
             tracker.register_signal_result("stocktwits", False)
         weights = tracker.recalculate_weights()
         self.assertAlmostEqual(1.0, sum(weights.values()), places=6)
-        self.assertTrue(all(0.02 <= weight <= 0.25 for weight in weights.values()))
+        self.assertTrue(
+            all(
+                SourcePerformanceTracker.MIN_WEIGHT
+                <= weight
+                <= SourcePerformanceTracker.MAX_WEIGHT
+                for weight in weights.values()
+            )
+        )
 
 
 if __name__ == "__main__":

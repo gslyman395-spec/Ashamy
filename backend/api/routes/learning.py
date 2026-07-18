@@ -12,6 +12,7 @@ class LearningAPI:
     """In-process API layer exposing required learning endpoints."""
 
     ACCURACY_THRESHOLD = 85.0
+    DEFAULT_TRAINING_MODEL = "lstm"
 
     def __init__(self) -> None:
         self.outcomes = OutcomeTracker()
@@ -19,6 +20,7 @@ class LearningAPI:
         self.model_manager = ModelManager()
         self.alerts = AlertManager()
         self._last_accuracy = 0.0
+        self._previous_accuracy = 0.0
 
     def get_status(self) -> Dict:
         summary = self.outcomes.summary()
@@ -36,7 +38,14 @@ class LearningAPI:
         summary = self.outcomes.summary()
         summary_7d = self.outcomes.summary(days=7)
         summary_30d = self.outcomes.summary(days=30)
-        trend = "improving" if summary["accuracy"] >= self.ACCURACY_THRESHOLD else "declining"
+        if summary["predictions_made"] == 0:
+            trend = "stable"
+        elif self._last_accuracy > self._previous_accuracy:
+            trend = "improving"
+        elif self._last_accuracy < self._previous_accuracy:
+            trend = "declining"
+        else:
+            trend = "stable"
         return {
             "accuracy": summary["accuracy"],
             "win_rate": summary["accuracy"],
@@ -68,9 +77,10 @@ class LearningAPI:
 
         performance = self.outcomes.summary()
         self.alerts.check_accuracy(performance["accuracy"])
+        self._previous_accuracy = self._last_accuracy
         self.model_manager.add_training_update(
             update_type="signal_outcome_update",
-            model="lstm",
+            model=self.DEFAULT_TRAINING_MODEL,
             before=self._last_accuracy,
             after=performance["accuracy"],
         )

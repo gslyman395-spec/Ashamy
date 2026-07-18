@@ -25,6 +25,8 @@ class SourcePerformanceTracker:
     MIN_WEIGHT = 0.02
     MAX_WEIGHT = 0.25
     WEIGHT_UPDATE_INTERVAL_DAYS = 7
+    DEFAULT_WEIGHT = 0.10
+    DEFAULT_ACCURACY = 0.50
     INITIAL_ACCURACY = {
         "polygon_io": 0.94,
         "tradingview": 0.87,
@@ -55,7 +57,9 @@ class SourcePerformanceTracker:
 
     def register_signal_result(self, source_name: str, correct: bool) -> None:
         if source_name not in self._sources:
-            self._sources[source_name] = SourceMetric(source_name, 0.10, 0.50)
+            self._sources[source_name] = SourceMetric(
+                source_name, self.DEFAULT_WEIGHT, self.DEFAULT_ACCURACY
+            )
         source = self._sources[source_name]
         source.signals_tracked += 1
         source.hits += 1 if correct else 0
