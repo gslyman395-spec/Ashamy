@@ -42,6 +42,10 @@ class LearningAPITestCase(unittest.TestCase):
         versions = self.api.get_model_versions()
         self.assertEqual("v2.3.0", versions["current_version"])
 
+    def test_model_rollback_failure_for_unknown_version(self) -> None:
+        result = self.api.rollback_version("v9.9.9")
+        self.assertEqual("failed", result["status"])
+
 
 class SourceWeightingTestCase(unittest.TestCase):
     def test_recalculate_weights_keeps_bounds_and_normalization(self) -> None:
@@ -56,4 +60,3 @@ class SourceWeightingTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

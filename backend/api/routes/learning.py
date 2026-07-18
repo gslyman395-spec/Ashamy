@@ -11,11 +11,14 @@ from backend.signal_aggregator.sources.source_performance import SourcePerforman
 class LearningAPI:
     """In-process API layer exposing required learning endpoints."""
 
+    ACCURACY_THRESHOLD = 85.0
+
     def __init__(self) -> None:
         self.outcomes = OutcomeTracker()
         self.source_tracker = SourcePerformanceTracker()
         self.model_manager = ModelManager()
         self.alerts = AlertManager()
+        self._last_accuracy = 0.0
 
     def get_status(self) -> Dict:
         summary = self.outcomes.summary()
@@ -31,7 +34,7 @@ class LearningAPI:
 
     def get_performance(self) -> Dict:
         summary = self.outcomes.summary()
-        trend = "improving" if summary["accuracy"] >= 85 else "declining"
+        trend = "improving" if summary["accuracy"] >= self.ACCURACY_THRESHOLD else "declining"
         return {
             "accuracy": summary["accuracy"],
             "win_rate": summary["win_rate"],
@@ -56,9 +59,9 @@ class LearningAPI:
         source_name = payload.get("source")
         if source_name:
             self.source_tracker.register_signal_result(source_name, outcome.win)
-            old_weight = self.source_tracker.snapshot()[source_name]["weight"]
+            old_weight = self.source_tracker.get_weight(source_name)
             self.source_tracker.recalculate_weights()
-            new_weight = self.source_tracker.snapshot()[source_name]["weight"]
+            new_weight = self.source_tracker.get_weight(source_name)
             self.alerts.check_weight_change(source_name, new_weight - old_weight)
 
         performance = self.outcomes.summary()
@@ -66,9 +69,10 @@ class LearningAPI:
         self.model_manager.add_training_update(
             update_type="weekly_retrain",
             model="lstm",
-            before=max(0.0, performance["accuracy"] - 1.0),
+            before=self._last_accuracy,
             after=performance["accuracy"],
         )
+        self._last_accuracy = performance["accuracy"]
         return {"status": "recorded", "signal": payload}
 
     def get_model_versions(self) -> Dict:
@@ -76,4 +80,3 @@ class LearningAPI:
 
     def rollback_version(self, version: str) -> Dict:
         return self.model_manager.rollback(version)
-
