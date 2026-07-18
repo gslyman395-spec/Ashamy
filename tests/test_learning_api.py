@@ -45,6 +45,7 @@ class LearningAPITestCase(unittest.TestCase):
     def test_model_rollback_failure_for_unknown_version(self) -> None:
         result = self.api.rollback_version("v9.9.9")
         self.assertEqual("failed", result["status"])
+        self.assertIn("unavailable", result["reason"])
 
 
 class SourceWeightingTestCase(unittest.TestCase):

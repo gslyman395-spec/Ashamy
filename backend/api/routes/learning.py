@@ -37,7 +37,7 @@ class LearningAPI:
         trend = "improving" if summary["accuracy"] >= self.ACCURACY_THRESHOLD else "declining"
         return {
             "accuracy": summary["accuracy"],
-            "win_rate": summary["win_rate"],
+            "win_rate": summary["accuracy"],
             "trend": trend,
             "last_7_days": summary["accuracy"],
             "last_30_days": summary["accuracy"],
@@ -67,7 +67,7 @@ class LearningAPI:
         performance = self.outcomes.summary()
         self.alerts.check_accuracy(performance["accuracy"])
         self.model_manager.add_training_update(
-            update_type="weekly_retrain",
+            update_type="signal_outcome_update",
             model="lstm",
             before=self._last_accuracy,
             after=performance["accuracy"],

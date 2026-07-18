@@ -54,7 +54,5 @@ class OutcomeTracker:
         return {
             "predictions_made": total,
             "correct_predictions": wins,
-            "win_rate": accuracy,
             "accuracy": accuracy,
         }
-

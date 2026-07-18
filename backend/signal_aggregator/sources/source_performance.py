@@ -60,7 +60,9 @@ class SourcePerformanceTracker:
 
         total = sum(updated.values())
         if total <= 0:
-            raise ValueError("Source weights sum must be greater than zero during normalization")
+            raise ValueError(
+                f"Source weights sum must be greater than zero during normalization. Current sum: {total}"
+            )
         for name, weight in updated.items():
             self._sources[name].weight = weight / total
         return {name: item.weight for name, item in self._sources.items()}
