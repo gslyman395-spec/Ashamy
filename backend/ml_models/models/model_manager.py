@@ -39,9 +39,6 @@ class ModelManager:
         self.training_updates.insert(0, entry)
         self.last_update = datetime.now(timezone.utc)
         self.next_retraining = self.last_update + timedelta(days=7)
-        if self.current_version not in self.archive:
-            self.archive.insert(0, self.current_version)
-            self.archive = self.archive[:10]
 
     def versions(self) -> Dict:
         return {
@@ -75,4 +72,3 @@ class ModelManager:
                 for item in self.training_updates
             ]
         }
-

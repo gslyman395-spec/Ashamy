@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 
@@ -47,9 +47,18 @@ class OutcomeTracker:
     def all(self) -> List[Dict]:
         return [asdict(item) for item in self._outcomes]
 
-    def summary(self) -> Dict:
-        total = len(self._outcomes)
-        wins = sum(1 for outcome in self._outcomes if outcome.win)
+    def summary(self, days: int | None = None) -> Dict:
+        outcomes = self._outcomes
+        if days is not None:
+            cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+            outcomes = [
+                outcome
+                for outcome in self._outcomes
+                if datetime.fromisoformat(outcome.timestamp) >= cutoff
+            ]
+
+        total = len(outcomes)
+        wins = sum(1 for outcome in outcomes if outcome.win)
         accuracy = round((wins / total) * 100, 2) if total else 0.0
         return {
             "predictions_made": total,

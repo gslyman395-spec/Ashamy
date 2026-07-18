@@ -34,13 +34,15 @@ class LearningAPI:
 
     def get_performance(self) -> Dict:
         summary = self.outcomes.summary()
+        summary_7d = self.outcomes.summary(days=7)
+        summary_30d = self.outcomes.summary(days=30)
         trend = "improving" if summary["accuracy"] >= self.ACCURACY_THRESHOLD else "declining"
         return {
             "accuracy": summary["accuracy"],
             "win_rate": summary["accuracy"],
             "trend": trend,
-            "last_7_days": summary["accuracy"],
-            "last_30_days": summary["accuracy"],
+            "last_7_days": summary_7d["accuracy"],
+            "last_30_days": summary_30d["accuracy"],
             "predictions_made": summary["predictions_made"],
             "correct_predictions": summary["correct_predictions"],
         }
@@ -60,9 +62,9 @@ class LearningAPI:
         if source_name:
             self.source_tracker.register_signal_result(source_name, outcome.win)
             old_weight = self.source_tracker.get_weight(source_name)
-            self.source_tracker.recalculate_weights()
-            new_weight = self.source_tracker.get_weight(source_name)
-            self.alerts.check_weight_change(source_name, new_weight - old_weight)
+            if self.source_tracker.recalculate_if_due():
+                new_weight = self.source_tracker.get_weight(source_name)
+                self.alerts.check_weight_change(source_name, new_weight - old_weight)
 
         performance = self.outcomes.summary()
         self.alerts.check_accuracy(performance["accuracy"])

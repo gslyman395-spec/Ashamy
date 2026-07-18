@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from typing import Dict
 
@@ -23,21 +24,34 @@ class SourcePerformanceTracker:
 
     MIN_WEIGHT = 0.02
     MAX_WEIGHT = 0.25
+    WEIGHT_UPDATE_INTERVAL_DAYS = 7
+    INITIAL_ACCURACY = {
+        "polygon_io": 0.94,
+        "tradingview": 0.87,
+        "bloomberg": 0.90,
+        "finviz": 0.86,
+        "seeking_alpha": 0.85,
+        "yahoo_finance": 0.86,
+        "alphavantage": 0.88,
+        "marketwatch": 0.88,
+        "thinkorswim": 0.89,
+        "stocktwits": 0.76,
+    }
 
     def __init__(self) -> None:
         baseline_signals = 100
+        default_weight = 1 / len(self.INITIAL_ACCURACY)
         self._sources: Dict[str, SourceMetric] = {
-            "polygon_io": SourceMetric("polygon_io", 0.10, 0.94, signals_tracked=baseline_signals, hits=94),
-            "tradingview": SourceMetric("tradingview", 0.10, 0.87, signals_tracked=baseline_signals, hits=87),
-            "bloomberg": SourceMetric("bloomberg", 0.10, 0.90, signals_tracked=baseline_signals, hits=90),
-            "finviz": SourceMetric("finviz", 0.10, 0.86, signals_tracked=baseline_signals, hits=86),
-            "seeking_alpha": SourceMetric("seeking_alpha", 0.10, 0.85, signals_tracked=baseline_signals, hits=85),
-            "yahoo_finance": SourceMetric("yahoo_finance", 0.10, 0.86, signals_tracked=baseline_signals, hits=86),
-            "alphavantage": SourceMetric("alphavantage", 0.10, 0.88, signals_tracked=baseline_signals, hits=88),
-            "marketwatch": SourceMetric("marketwatch", 0.10, 0.88, signals_tracked=baseline_signals, hits=88),
-            "thinkorswim": SourceMetric("thinkorswim", 0.10, 0.89, signals_tracked=baseline_signals, hits=89),
-            "stocktwits": SourceMetric("stocktwits", 0.10, 0.76, signals_tracked=baseline_signals, hits=76),
+            name: SourceMetric(
+                name=name,
+                weight=default_weight,
+                accuracy=accuracy,
+                signals_tracked=baseline_signals,
+                hits=int(accuracy * baseline_signals),
+            )
+            for name, accuracy in self.INITIAL_ACCURACY.items()
         }
+        self._last_weight_update = datetime.now(timezone.utc)
 
     def register_signal_result(self, source_name: str, correct: bool) -> None:
         if source_name not in self._sources:
@@ -65,7 +79,15 @@ class SourcePerformanceTracker:
             )
         for name, weight in updated.items():
             self._sources[name].weight = weight / total
+        self._last_weight_update = datetime.now(timezone.utc)
         return {name: item.weight for name, item in self._sources.items()}
+
+    def recalculate_if_due(self) -> bool:
+        due_at = self._last_weight_update + timedelta(days=self.WEIGHT_UPDATE_INTERVAL_DAYS)
+        if datetime.now(timezone.utc) >= due_at:
+            self.recalculate_weights()
+            return True
+        return False
 
     def snapshot(self) -> Dict[str, Dict]:
         return {
@@ -79,4 +101,7 @@ class SourcePerformanceTracker:
         }
 
     def get_weight(self, source_name: str) -> float:
-        return self._sources[source_name].weight
+        source = self._sources.get(source_name)
+        if source is None:
+            return 0.0
+        return source.weight
