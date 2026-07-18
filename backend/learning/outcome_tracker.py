@@ -19,7 +19,9 @@ class SignalOutcome:
 
     @classmethod
     def from_payload(cls, payload: Dict) -> "SignalOutcome":
-        timestamp = payload.get("timestamp") or datetime.now(timezone.utc).isoformat()
+        timestamp = payload.get("timestamp")
+        if timestamp is None:
+            timestamp = datetime.now(timezone.utc).isoformat()
         return cls(
             signal_id=payload["signal_id"],
             symbol=payload["symbol"],
