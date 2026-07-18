@@ -519,6 +519,13 @@ class TestAPI:
         for g in data["top_gainers"]:
             assert "BUY" in g["direction"]
 
+    def test_leaderboard_has_source_details(self, client):
+        resp = client.get("/api/v1/leaderboard?timeframe=1D&n=5")
+        data = resp.json()
+        for g in data["top_gainers"]:
+            assert "source_details" in g
+            assert isinstance(g["source_details"], dict)
+
     def test_leaderboard_losers_are_bearish(self, client):
         resp = client.get("/api/v1/leaderboard?timeframe=1D&n=10")
         data = resp.json()

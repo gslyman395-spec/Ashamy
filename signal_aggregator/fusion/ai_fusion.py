@@ -104,8 +104,8 @@ class AIFusion:
         majority = _coarse(fused_score)
         agreement = sum(1 for d in all_dirs if _coarse(d) == majority) / len(all_dirs)
 
-        entry = aggregated.source_details[next(iter(aggregated.source_details), "")]
-        price = entry.get("price", 100.0) if aggregated.source_details else 100.0
+        first_key = next(iter(aggregated.source_details), None)
+        price = aggregated.source_details[first_key].get("price", 100.0) if first_key else 100.0
 
         target_pct, stop_pct = self._targets(fused_score, direction)
         target = round(price * (1 + target_pct), 2)

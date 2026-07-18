@@ -160,6 +160,9 @@ async def get_leaderboard(
                 "risk_reward": s.risk_reward,
                 "win_probability": s.win_probability,
                 "alert_level": s.alert_level,
+                "agreement_pct": s.fused_signal.agreement_pct,
+                "source_details": s.fused_signal.source_details,
+                "ai_details": s.fused_signal.ai_details,
             })
         return out
 
@@ -239,7 +242,7 @@ async def ws_signals(websocket: WebSocket):
             for res in results:
                 if timeframe in res.scores:
                     out.append(
-                        _to_response(res.scores[timeframe], res.timeframes[timeframe]).dict()
+                        _to_response(res.scores[timeframe], res.timeframes[timeframe]).model_dump()
                     )
             await websocket.send_text(json.dumps({
                 "type": "signal_update",
