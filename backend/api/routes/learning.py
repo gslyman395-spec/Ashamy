@@ -11,7 +11,6 @@ from backend.signal_aggregator.sources.source_performance import SourcePerforman
 class LearningAPI:
     """In-process API layer exposing required learning endpoints."""
 
-    ACCURACY_THRESHOLD = 85.0
     DEFAULT_TRAINING_MODEL = "lstm"
 
     def __init__(self) -> None:
@@ -38,17 +37,22 @@ class LearningAPI:
         summary = self.outcomes.summary()
         summary_7d = self.outcomes.summary(days=7)
         summary_30d = self.outcomes.summary(days=30)
+        source_snapshot = self.source_tracker.snapshot()
+        model_accuracy = round(
+            sum(source["weight"] * source["accuracy"] for source in source_snapshot.values()) * 100, 2
+        )
+        current_win_rate = summary["accuracy"]
         if summary["predictions_made"] == 0:
             trend = "stable"
-        elif self._last_accuracy > self._previous_accuracy:
+        elif current_win_rate > self._previous_accuracy:
             trend = "improving"
-        elif self._last_accuracy < self._previous_accuracy:
+        elif current_win_rate < self._previous_accuracy:
             trend = "declining"
         else:
             trend = "stable"
         return {
-            "accuracy": summary["accuracy"],
-            "win_rate": summary["accuracy"],
+            "accuracy": model_accuracy,
+            "win_rate": current_win_rate,
             "trend": trend,
             "last_7_days": summary_7d["accuracy"],
             "last_30_days": summary_30d["accuracy"],

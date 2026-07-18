@@ -56,7 +56,7 @@ class OutcomeTracker:
             outcomes = [
                 outcome
                 for outcome in self._outcomes
-                if datetime.fromisoformat(outcome.timestamp) >= cutoff
+                if self._as_aware_datetime(outcome.timestamp) >= cutoff
             ]
 
         total = len(outcomes)
@@ -67,3 +67,10 @@ class OutcomeTracker:
             "correct_predictions": wins,
             "accuracy": accuracy,
         }
+
+    @staticmethod
+    def _as_aware_datetime(value: str) -> datetime:
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed

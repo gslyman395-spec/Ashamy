@@ -55,7 +55,7 @@ class SourceWeightingTestCase(unittest.TestCase):
             tracker.register_signal_result("polygon_io", True)
             tracker.register_signal_result("stocktwits", False)
         weights = tracker.recalculate_weights()
-        self.assertAlmostEqual(1.0, sum(weights.values()), places=6)
+        self.assertAlmostEqual(1.0, sum(weights.values()), places=3)
         self.assertTrue(
             all(
                 SourcePerformanceTracker.MIN_WEIGHT

@@ -87,8 +87,8 @@ class SourcePerformanceTracker:
         return {name: item.weight for name, item in self._sources.items()}
 
     def recalculate_if_due(self) -> bool:
-        next_update_time = self._last_weight_update + timedelta(days=self.WEIGHT_UPDATE_INTERVAL_DAYS)
-        if datetime.now(timezone.utc) >= next_update_time:
+        scheduled_update_time = self._last_weight_update + timedelta(days=self.WEIGHT_UPDATE_INTERVAL_DAYS)
+        if datetime.now(timezone.utc) >= scheduled_update_time:
             self.recalculate_weights()
             return True
         return False
