@@ -7,14 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
   StatusBar,
 } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WebSocket } from 'react-native';
 
-const screenWidth = Dimensions.get('window').width;
+import { API_URL, WS_URL } from './config';
 
 export default function DashboardScreen() {
   const [stocks, setStocks] = useState([]);
@@ -24,9 +21,6 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [accuracy, setAccuracy] = useState(94.2);
   const [webSocket, setWebSocket] = useState(null);
-
-  // API Base URL
-  const API_URL = 'http://localhost:8000/api/v1';
 
   // تحميل البيانات
   useEffect(() => {
@@ -43,7 +37,7 @@ export default function DashboardScreen() {
   // الاتصال بـ WebSocket
   const connectWebSocket = () => {
     try {
-      const ws = new WebSocket('ws://localhost:8000/ws/signals');
+      const ws = new WebSocket(WS_URL);
       
       ws.onopen = () => {
         console.log('✅ WebSocket Connected');
@@ -73,7 +67,10 @@ export default function DashboardScreen() {
       // جلب الأسهم الشهيرة
       const response = await fetch(`${API_URL}/leaderboard`);
       const data = await response.json();
-      setStocks(data.top_gainers || []);
+      if (!response.ok) {
+        throw new Error('Leaderboard request failed');
+      }
+      setStocks(Array.isArray(data.top_gainers) ? data.top_gainers : []);
       
       // جلب بيانات السهم المختار
       fetchStockSignal(selectedStock);
@@ -94,10 +91,13 @@ export default function DashboardScreen() {
     try {
       const response = await fetch(`${API_URL}/signals/${symbol}?timeframes=1D,4H`);
       const data = await response.json();
-      setStockData(data);
+      if (!response.ok) {
+        throw new Error('Signal request failed');
+      }
+      setStockData(data || null);
       
-      if (data.final_confidence) {
-        setAccuracy(Math.round(data.final_confidence * 100) / 100);
+      if (typeof data.final_confidence === 'number') {
+        setAccuracy(Math.round(data.final_confidence * 10000) / 100);
       }
       
       await AsyncStorage.setItem(`stock_${symbol}`, JSON.stringify(data));
@@ -110,7 +110,9 @@ export default function DashboardScreen() {
   const updateStockData = (data) => {
     if (data.symbol === selectedStock) {
       setStockData(data);
-      setAccuracy(data.final_confidence * 100);
+      if (typeof data.final_confidence === 'number') {
+        setAccuracy(Math.round(data.final_confidence * 10000) / 100);
+      }
     }
   };
 

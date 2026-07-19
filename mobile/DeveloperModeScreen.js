@@ -6,13 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   Switch,
-  TextInput,
-  FlatList,
   RefreshControl,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { API_URL } from './config';
 
 export default function DeveloperModeScreen() {
   const [devEnabled, setDevEnabled] = useState(false);
@@ -28,8 +27,6 @@ export default function DeveloperModeScreen() {
   const [autoOptimize, setAutoOptimize] = useState(true);
   const [selectedModel, setSelectedModel] = useState('all');
   const [optimizationStatus, setOptimizationStatus] = useState('idle');
-
-  const API_URL = 'http://localhost:8000/api/v1';
 
   useEffect(() => {
     loadDevSettings();
