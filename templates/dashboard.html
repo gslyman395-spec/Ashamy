@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trading Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #111; color: white; font-family: Arial; }
+        .box { padding: 20px; margin: 20px; background: #222; border-radius: 10px; }
+        .signal { font-size: 30px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h1>Trading AI Dashboard</h1>
+
+<div class="box">
+    <h2>AI Signal</h2>
+    <div id="signal" class="signal">Loading...</div>
+</div>
+
+<div class="box">
+    <h2>Price Chart</h2>
+    <canvas id="chart"></canvas>
+</div>
+
+<script>
+async function loadSignal() {
+    let res = await fetch("/api/signal");
+    let data = await res.json();
+    document.getElementById("signal").innerHTML = data.signal;
+}
+
+async function loadChart() {
+    let res = await fetch("/api/data");
+    let data = await res.json();
+    let df = JSON.parse(data);
+
+    let labels = df.Date;
+    let prices = df.Close;
+
+    new Chart(document.getElementById("chart"), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Close Price",
+                data: prices,
+                borderColor: "cyan"
+            }]
+        }
+    });
+}
+
+loadSignal();
+loadChart();
+setInterval(loadSignal, 3000);
+</script>
+
+</body>
+</html>
